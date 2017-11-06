@@ -16,25 +16,24 @@ server.bind(server_address)
 # Listen for incoming connections
 server.listen(5)
 
-my_dict = None
+my_dict = {}
 
 while True:
     c, addr = server.accept()  # Establish connection with client.
     print 'Got connection from', addr
     data = c.recv(1024)
-    if data == 'hey':
-        c.send('Thank you for connecting')
-    elif data[0:4] == 'dict:':
-        my_dict = json.loads(data)  # data loaded
-        print(my_dict)
-    elif data[0:6] == 'update:':
+    str = data[0:6]
+    if data[0:6] == 'update:':
         numIndex = 0 ;
         for i in range(0 , len(data)):
             if data[i] == ',':
-                numIndex = i-6
-        uIndex = data[6:6+numIndex]
-        uData = data[6+numIndex: len(data)]
-        my_dict[uIndex] = uData
+                numIndex = i-10 # 10 because is the "update:" string + op("del"/"add") string
+        key = data[10:10+numIndex]
+        value = data[10+numIndex: len(data)]
+        if data[6:9]  == "add":
+            my_dict[key] = value
+        else:
+            del my_dict[key]
         print(my_dict)
     elif data[0:5] == "close:":
         server.shutdown

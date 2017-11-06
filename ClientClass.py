@@ -1,4 +1,4 @@
-from dictionaryObserver import dict_observer
+import Dictio
 import socket
 import sys
 import json
@@ -33,24 +33,17 @@ class Client_Class :
 
     def getDicionary(self): #create dictionary if is not exists
         if not hasattr(self , '_dict'):
-            value = {'-1':'Zara'}
-            self._dict = dict_observer(value,self.SendUpdate())
+            self._dict = Dictio.LowerDict(self)
         return self._dict
 
     def Disconnect(self): #disconnect from server
         if self._server is not None:
             self._server.send("close:")
-            self._server.close(self)
             self._server = None
 
-    def SendUpdate(self): #when the dictionary is changet this method will call
+    def SendUpdate(self , op , key=None, value=None): #when the dictionary is changet this method will call
         if hasattr(self, '_server') and hasattr(self, '_dict'):
-            if len(self._dict) == 1:
-                data_string = json.dumps(self._dict)  # data serialized
-                self._server.send("dict: " + data_string)
-            else:
-                msg = input("\nyour update : ")
-                self._server.send("update: "+self._name + " : " + msg)
+            self._server.send("update:"+op+": " + key+","+value+"\n")
         else:
             print("\n there is no server")
 
