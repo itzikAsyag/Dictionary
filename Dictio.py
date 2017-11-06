@@ -31,3 +31,4 @@ class LowerDict(dict):  # dicts take a mapping or iterable as their optional fir
         super(LowerDict, self).update(self)
     def __contains__(self, k):
         return super(LowerDict, self).__contains__(k)
+# lol
