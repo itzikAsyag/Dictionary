@@ -9,7 +9,7 @@ class dict_observer(dict):
 
     def set_observer(self, observer):
         """
-        All changes to this dictionary will trigger calls to observer methods
+        All changes  to this dictionary will trigger calls to observer methods
         """
         self.observer = observer
 

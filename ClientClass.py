@@ -18,7 +18,7 @@ class Client_Class :
             return self._server
         except IOError:
             print("\n\n\a\t\tUndefined Connection Error Encountered")
-            input("Press Enter to exit, then restart the script")
+            input("Press Enter  to exit, then restart the script")
             sys.exit()
 
     ''' * send message that write the user in prompt
