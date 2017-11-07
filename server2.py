@@ -1,9 +1,10 @@
-import select
 import socket
 import sys
-import dictionaryObserver
-import json
-import Queue
+
+_updateHeader = 7
+_updteOperationHeader = 4
+_updateFullHeader = 11
+_closeHeader = 6
 
 # Create a TCP/IP socket
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -22,19 +23,21 @@ while True:
     c, addr = server.accept()  # Establish connection with client.
     print 'Got connection from', addr
     data = c.recv(1024)
-    str = data[0:6]
-    if data[0:6] == 'update:':
-        numIndex = 0 ;
-        for i in range(0 , len(data)):
-            if data[i] == ',':
-                numIndex = i-10 # 10 because is the "update:" string + op("del"/"add") string
-        key = data[10:10+numIndex]
-        value = data[10+numIndex: len(data)]
-        if data[6:9]  == "add":
-            my_dict[key] = value
-        else:
-            del my_dict[key]
-        print(my_dict)
-    elif data[0:5] == "close:":
-        server.shutdown
-        print("Bye Bye")
+    array = data.split("\n")
+    for word in array:
+        if word[:_updateHeader] == 'update:':
+            numIndex = 0 ;
+            for i in range(_updateFullHeader , len(data)):
+                if word[i] == ',':
+                    numIndex = i-_updateFullHeader # 11 because is the "update:" string + op("del:"/"add:") string
+                    break
+            key = word[_updateFullHeader:_updateFullHeader+numIndex]
+            value = word[(_updateFullHeader+numIndex)+1: len(data)]
+            if word[_updateHeader:_updateFullHeader]  == "add:":
+                my_dict[key] = value
+            else:
+                del my_dict[key]
+            print(my_dict)
+        elif word[:_closeHeader] == "close:":
+            server.shutdown
+            print("Bye Bye")
