@@ -1,5 +1,6 @@
 import socket
 import sys
+from time import sleep
 
 _updateHeader = 7
 _updteOperationHeader = 4
@@ -18,26 +19,50 @@ server.bind(server_address)
 server.listen(5)
 
 my_dict = {}
+c, addr = server.accept()  # Establish connection with client.
+print 'Got connection from', addr
 
 while True:
-    c, addr = server.accept()  # Establish connection with client.
-    print 'Got connection from', addr
-    data = c.recv(1024)
-    array = data.split("\n")
-    for word in array:
-        if word[:_updateHeader] == 'update:':
-            numIndex = 0 ;
-            for i in range(_updateFullHeader , len(data)):
-                if word[i] == ',':
-                    numIndex = i-_updateFullHeader # 11 because is the "update:" string + op("del:"/"add:") string
-                    break
-            key = word[_updateFullHeader:_updateFullHeader+numIndex]
-            value = word[(_updateFullHeader+numIndex)+1: len(data)]
-            if word[_updateHeader:_updateFullHeader]  == "add:":
-                my_dict[key] = value
-            else:
-                del my_dict[key]
-            print(my_dict)
-        elif word[:_closeHeader] == "close:":
-            server.shutdown
-            print("Bye Bye")
+    try:
+        data = c.recv(1024)
+    except socket.timeout, e:
+        err = e.args[0]
+        # this next if/else is a bit redundant, but illustrates how the
+        # timeout exception is setup
+        if err == 'timed out':
+            sleep(1)
+            print 'recv timed out, retry later'
+            continue
+        else:
+            print e
+            sys.exit(1)
+    except socket.error, e:
+        # Something else happened, handle error, exit, etc.
+        print e
+        sys.exit(1)
+    else:
+        if len(data) == 0:
+            print 'orderly shutdown on server end'
+            sys.exit(0)
+        else:
+                if data[:_updateHeader] == 'update:':
+                    if data[_updateHeader:_updateFullHeader] == "ext:":
+                        server.shutdown
+                        print("Bye Bye")
+                        sys.exit()
+                    else:
+                        numIndex = 0 ;
+                        for i in range(_updateFullHeader , len(data)):
+                            if data[i] == ',':
+                                numIndex = i-_updateFullHeader # 11 because is the "update:" string + op("del:"/"add:") string
+                                break
+                        key = data[_updateFullHeader:_updateFullHeader+numIndex]
+                        if data[_updateHeader:_updateFullHeader]  == "add:":
+                            c.send("recive!")
+                            print("add")
+                            value = data[(_updateFullHeader + numIndex) + 1: len(data)]
+                            my_dict[key] = value
+                        elif data[_updateHeader:_updateFullHeader]  == "del:":
+                            c.send("recive!")
+                            print("delete")
+                            del my_dict[key]

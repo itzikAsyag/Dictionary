@@ -1,12 +1,14 @@
 import Dictio
 import socket
 import sys
-import json
+import threading
 
 class Client_Class :
 
     def __init__(self , username): #initialize , getting username from user
         self._name = username
+        self._flag = True
+        self._cv = threading.Condition()
 
     def Connect(self): # create connection to server with host and ip variables from user
         HOST = input("\nNet Send Server Public IP: ")
@@ -38,12 +40,27 @@ class Client_Class :
 
     def Disconnect(self): #disconnect from server
         if self._server is not None:
-            self._server.send("close:")
-            self._server = None
+            self.SendUpdate("ext")
+
 
     def SendUpdate(self , op , key=None, value=None): #when the dictionary is changet this method will call
         if hasattr(self, '_server') and hasattr(self, '_dict'):
-            self._server.send("update:"+op+": " + key+","+value+"\n")
+            self._cv.acquire
+            if op == "del":
+                self._server.send("update:" + op + ": " + key + ",\n")
+            elif op == "ext":
+                self._server.send("update:" + op + ",\n")
+                self._server.shutdown
+                return
+            else:
+                self._server.send("update:"+op+": " + key+","+value+"\n")
+            self._flag = False
+            while not self._flag:
+                data = self._server.recv(1024)
+                print(data)
+                if data == "recive!":
+                    self._flag = True
+                    self._cv.release
         else:
             print("\n there is no server")
 
